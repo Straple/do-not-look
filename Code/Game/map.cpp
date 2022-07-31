@@ -1,4 +1,4 @@
-const int map_h = 5;
+﻿const int map_h = 5;
 const int map_w = 10;
 
 std::vector<text_t> map = {

@@ -33,4 +33,3 @@ void add_hit_effect(const dot& pos) {
 void add_death_effect(const dot& pos) {
 	Effects.push_back(effect(pos, DEATH_EFFECT_ANIM));
 }
-

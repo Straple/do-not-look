@@ -10,6 +10,7 @@
 #define PLAYER_MAX_COMBO 3
 #define PLAYER_ATTACK_COOLDOWN 1.3
 #define PLAYER_JUMP_COOLDOWN 0.5
+#define PLAYER_TIME_SOUND_STEP 0.3
 
 const static animation player_anims[] = {
 		animation(SP_PLAYER, 0, 6, 0.1, 64),  // run right
@@ -99,6 +100,7 @@ struct Player {
 	point_t jump_cooldown_acc = PLAYER_JUMP_COOLDOWN;
 	point_t time_between_attack = PLAYER_ATTACK_COOLDOWN;
 	point_t time_jump = 0;
+	point_t time_between_sound_step = PLAYER_TIME_SOUND_STEP;
 
 	s8 cnt_combo = 0;
 
@@ -107,9 +109,10 @@ struct Player {
 	bool is_jumped = false;
 	bool is_attack = false;
 	bool is_paralyzed = false;
+	bool is_eyes_closed = false;
 
 	// animations
-	animation anim;
+	mutable animation anim;
 	Player_anim_tree::anim_and_dir_t anim_type;
 
 	Player() {}
@@ -124,10 +127,14 @@ struct Player {
 	void draw() const {
 		draw_sprite(pos + dot(-7, 4) * PLAYER_DRAW_SIZE, PLAYER_DRAW_SIZE, SP_MEDIUM_SHADOW);
 
-		anim.draw(pos + PLAYER_DELTA_DRAW_POS, PLAYER_DRAW_SIZE);
-
-		dot p = pos;
-		static_pos_update(p);
+		if (is_eyes_closed) {
+			anim.sprite_sheet = SP_PLAYER_CLOSED_EYES;
+			anim.draw(pos + PLAYER_DELTA_DRAW_POS, PLAYER_DRAW_SIZE);
+			anim.sprite_sheet = SP_PLAYER;
+		}
+		else {
+			anim.draw(pos + PLAYER_DELTA_DRAW_POS, PLAYER_DRAW_SIZE);
+		}
 
 		draw_collision_obj(*this);
 
@@ -137,8 +144,14 @@ struct Player {
 		}
 
 		// draw money
-		draw_text_align(to_string(player.money).c_str(), dot(-arena_half_size.x, arena_half_size.y) * 0.8 + dot(-8, -1), 1, YELLOW);
-		draw_sprite(dot(-arena_half_size.x, arena_half_size.y) * 0.8 + camera.pos, 0.5, SP_COIN);
+		
+		// old draw
+		//draw_text_align(to_string(player.money).c_str(), dot(-arena_half_size.x, arena_half_size.y) * 0.8 + dot(-8, -1), 1, YELLOW);
+		//draw_sprite(dot(-arena_half_size.x, arena_half_size.y) * 0.8 + camera.pos, 0.5, SP_COIN);
+
+		for (int i = 0; i < money; i++) {
+			draw_sprite(dot(-arena_half_size.x, arena_half_size.y) * 0.8 + camera.pos + dot(-14 - i * 2 + money * 2, 0), 0.5, SP_COIN);
+		}
 	}
 
 	void simulate(point_t delta_time, dot ddp, bool is_attached, bool pressed_jump) {
@@ -210,6 +223,16 @@ struct Player {
 				}
 
 				if (new_attack) {
+					// добавим музыку меча
+					{
+						if (get_urnd() < 0.5) {
+							Sounds[AUD_SWORD1].play();
+						}
+						else {
+							Sounds[AUD_SWORD2].play();
+						}
+					}
+
 					is_attack = true;
 					now_is_attached = true;
 
@@ -231,6 +254,16 @@ struct Player {
 				}
 			}
 			else {
+
+				// если мы ходим
+				if (ddp != dot()) {
+					// нужно добавить звук
+					if (time_between_sound_step >= PLAYER_TIME_SOUND_STEP) {
+						time_between_sound_step = 0;
+						Sounds[AUD_STEP1 + get_rnd_range_int(0, 5)].play();
+					}
+				}
+				time_between_sound_step += delta_time;
 
 				// simulate move
 				{
@@ -302,8 +335,9 @@ struct Player {
 		bool is_attack = false;
 
 		for (s32 i = 0; i < Enemies.size(); i++) {
-			if (attack_trigger(Enemies[i].pos) && reinterpret_cast<char*>(&Enemies[i]) != reinterpret_cast<char*>(this)) {
+			if (attack_trigger(Enemies[i].pos)) {
 				is_attack = true;
+				// мы кого-то ударили
 
 				if (Enemies[i].simulate_hit(*this)) {
 					// enemy kill
@@ -320,7 +354,7 @@ struct Player {
 
 	void restart() {
 
-		// смерть не работает
+		// смерть отдыхает
 
 		//add_death_effect(pos + dot(-16, 22) * gobj_state.size);
 

@@ -48,9 +48,7 @@ struct Bat {
 		else {
 
 			auto bad_target = [&](point_t radius) -> bool {
-
-				return //player.is_paralyzed || player.is_jumped ||
-					(player.pos - pos).getLen() > radius;
+				return (player.pos - pos).getLen() > radius;
 			};
 
 			ddp = dot();
@@ -86,18 +84,22 @@ struct Bat {
 
 				move_to2d(pos, player.pos, dp, (player.pos - pos).normalize() * enemy_state.ddp_speed, delta_time);
 
-				// мы близко к игроку и
+				// мы близко к игроку и кулдаун атаки прошел
 				if ((player.pos - pos).getLen() <= enemy_state.jump_radius &&
 					attack_cooldown_accum >= enemy_state.attack_cooldown) {
 
-					// hit
+					if (!player.is_eyes_closed) {
 
-					attack_cooldown_accum = 0;
+						// hit
 
-					pos = player.pos; // прыгаем на игрока
+						attack_cooldown_accum = 0;
 
-					player.update_health(-1);
-					add_hit_effect(player.pos + dot(-8, 16) * PLAYER_DRAW_SIZE);
+						pos = player.pos; // прыгаем на игрока
+
+						player.update_health(-1);
+						add_hit_effect(player.pos + dot(-8, 16) * PLAYER_DRAW_SIZE);
+						add_sound_player_hurt();
+					}
 				}
 			}
 			else {
@@ -160,11 +162,13 @@ struct Bat {
 		hp -= player.damage;
 
 		if (hp <= 0) {
+			add_sound_bat_death();
 			add_death_effect(pos + dot(-16, 22) * BAT_DRAW_SIZE);
 			add_random_game_object(pos);
 			return true;
 		}
 		else {
+			add_sound_bat_hurt();
 			ddp += player.get_dir() * enemy_state.ddp_speed * 1.5;
 			paralyzed_cooldown_accum = 0;
 			return false;

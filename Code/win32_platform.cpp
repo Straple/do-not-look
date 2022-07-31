@@ -1,117 +1,16 @@
-﻿
-/*			
+﻿#define DEBUG_MODE
 
-
-										+------+
-										|dot   |
-				+----------+			|rect  |
-				|   file   |			|line  |----------------+
-				|png or eng|			|circle|				|
-				+----------+			+------+				|
-					|						|					|
-					|						|					|
-	+-----+		+------+			+----------------+		+---------+		+----+		+---------------+
-	|color|-----|sprite|			|geometry objects|		|collision|		|time|		|platform common|
-	+-----+		+------+			+----------------+		+---------+		+----+		+---------------+
-					|						|					|				|			|
-					|						|					|				|			|
-					|				+-------------+				|				|			|
-					+---------------|engine object|-------------+---------------+-----------+
-									+-------------+																		+------+
-											|																	+-------|logics|
-											|																	|		+------+
-											|																	|
-			+----+					++===========++															+------------+				+------+
-			|GAME|<=================||GAME ENGINE||---------------------------------------------------------|game objects|--------------|sprite|
-			+----+					++===========++															+------------+				+------+
-											|	|																	|
-											|	+-----------------------------------+								+-------+
-											|										|										|
-					+------------+		+------+								+-------+								+---------+
-					|render state|------|render|						+-------|physics|-----------+					|collision|
-					+------------+		+------+						|		+-------+			|					+---------+
-											|							|			|				|
-											|							|			|				|
-										+------------+				+----+		+---------+		+----+
-										|basic render|				|time|		|collision|		|move|
-										+------------+				+----+		+---------+		+----+
-											|
-											|
-									+---------------+
-					+---------------|render geometry|-------------------+
-					|				+---------------+					|
-					|						|							|
-					|						|							|
-				+-----------+			+-------------+			+---------------+
-				|render text|			|render sprite|			|render phenomen|
-				+-----------+			+-------------+			+---------------+
-											|
-											|
-										+---------+
-										|animation|
-										+---------+
- 
- 
-*/
-
-/*
-*       y ^
-*         |
-*         |
-*         |
-*         |
-*         |
-*         +----------->
-*         O           x
-*
-*/
-
-/*
-*         left                                            right
-*           |                                               |
-*     top --+-----------------------------------------------+
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*           |                                               |
-*  bottom --+-----------------------------------------------+
-*
-*
-*/
-
-/*  
-*   p0 = (x0, y0)
-*   p1 = (x1, y1)
-* 
-*   p0---+
-*   |    |
-*   |    |
-*   |    |
-*   +----p1
-*/
-
-/*
-ESC = exit
-ENTER = windows mode
-TAB = debug mode
-K = locator visibility
-BUTTON_F = fps mode
-UP, DOWN = render_scale
-*/
-
-#define DEBUG_MODE
+//#define WINX64
+#define WINX32
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 
-#include <windows.h>
+#include <windows.h> // window
+
+#include <audiere.h>
+using namespace audiere;
 
 #undef max
 #undef min
@@ -121,6 +20,8 @@ UP, DOWN = render_scale
 #include "Objects/objects.h"
 
 #include "Sprites/sprite.cpp"
+
+#include "Audio/audio.cpp"
 
 /*
 * GLOBAL VARIABLES
@@ -133,7 +34,7 @@ Render_state render_state;
 dot arena_half_size;
 
 bool running = true;
-bool show_fps = true;
+bool show_fps = false;
 bool show_cursor = false;
 bool show_console = false;
 bool fullscreen_mode = true;
@@ -204,6 +105,7 @@ case vk: {\
 } break;
 
 			switch (vk_code) {
+				update_button(BUTTON_SHIFT, VK_SHIFT);
 				update_button(BUTTON_UP, VK_UP);
 				update_button(BUTTON_DOWN, VK_DOWN);
 				update_button(BUTTON_W, 'W');
@@ -304,6 +206,13 @@ int main() {
 	//=========================================//
 
 	read_sprites();
+
+	AudioDevicePtr device;
+	// audio initialization
+	{
+		device = OpenDevice();
+		init_audio(device);
+	}
 
 	// Create Window class
 	WNDCLASS window_class = {};
@@ -425,4 +334,3 @@ int main() {
 
 	return 0;
 }
-

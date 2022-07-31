@@ -103,110 +103,116 @@ void render_game() {
 
 	clear_screen(BLACK);
 
-	render_map();
+	if (player.is_eyes_closed) {
+		player.draw();
+	}
+	else {
 
-	// draw players, slimes, bats, 
-	// bushes, trees, fireplaces,
-	// logs
-	{
-		// top sort
+		render_map();
 
-		struct top_sort_object {
+		// draw players, slimes, bats, 
+		// bushes, trees, fireplaces,
+		// logs
+		{
+			// top sort
 
-			enum type_object {
-				TO_PLAYER,
-				TO_SLIME,
-				TO_BAT,
-				TO_GAME_ITEM,
+			struct top_sort_object {
 
-				TO_UNDEFIND,
+				enum type_object {
+					TO_PLAYER,
+					TO_SLIME,
+					TO_BAT,
+					TO_GAME_ITEM,
+
+					TO_UNDEFIND,
+				};
+
+				type_object type;
+				const void* ptr;
+
+				top_sort_object() {
+					type = TO_UNDEFIND;
+					ptr = nullptr;
+				}
+
+				top_sort_object(const Player& player) {
+					type = TO_PLAYER;
+					ptr = reinterpret_cast<const void*>(&player);
+				}
+				top_sort_object(const Bat& player) {
+					type = TO_BAT;
+					ptr = reinterpret_cast<const void*>(&player);
+				}
+				top_sort_object(const Slime& slime) {
+					type = TO_SLIME;
+					ptr = reinterpret_cast<const void*>(&slime);
+				}
+				top_sort_object(const game_item& gitem) {
+					type = TO_GAME_ITEM;
+					ptr = reinterpret_cast<const void*>(&gitem);
+				}
+
+				point_t get_y() const {
+					switch (type) {
+					case TO_PLAYER: {
+						return reinterpret_cast<const Player*>(ptr)->pos.y;
+					}break;
+					case TO_SLIME: {
+						return reinterpret_cast<const Slime*>(ptr)->pos.y;
+					}break;
+					case TO_BAT: {
+						return reinterpret_cast<const Bat*>(ptr)->pos.y;
+					}break;
+					case TO_GAME_ITEM: {
+						return reinterpret_cast<const game_item*>(ptr)->pos.y;
+					}break;
+					}
+
+					ASSERT(false, "undefind object type");
+				}
+
+				void draw() {
+					switch (type) {
+					case TO_PLAYER: {
+						reinterpret_cast<const Player*>(ptr)->draw();
+					}break;
+					case TO_SLIME: {
+						reinterpret_cast<const Slime*>(ptr)->draw();
+					}break;
+					case TO_BAT: {
+						reinterpret_cast<const Bat*>(ptr)->draw();
+					}break;
+					case TO_GAME_ITEM: {
+						reinterpret_cast<const game_item*>(ptr)->draw();
+					}break;
+					case TO_UNDEFIND: {
+						ASSERT(false, "undefind object type");
+					}break;
+					}
+				}
+
+				bool operator < (const top_sort_object& Rhs) const {
+					return get_y() > Rhs.get_y();
+				}
 			};
 
-			type_object type;
-			const void* ptr;
-
-			top_sort_object() {
-				type = TO_UNDEFIND;
-				ptr = nullptr;
+			std::vector<top_sort_object> Objects;
+			Objects.push_back(player);
+			for (auto& slime : Slimes) {
+				Objects.push_back(slime);
+			}
+			for (auto& bat : Bats) {
+				Objects.push_back(bat);
+			}
+			for (auto& gitem : Game_items) {
+				Objects.push_back(gitem);
 			}
 
-			top_sort_object(const Player& player) {
-				type = TO_PLAYER;
-				ptr = reinterpret_cast<const void*>(&player);
-			}
-			top_sort_object(const Bat& player) {
-				type = TO_BAT;
-				ptr = reinterpret_cast<const void*>(&player);
-			}
-			top_sort_object(const Slime& slime) {
-				type = TO_SLIME;
-				ptr = reinterpret_cast<const void*>(&slime);
-			}
-			top_sort_object(const game_item& gitem) {
-				type = TO_GAME_ITEM;
-				ptr = reinterpret_cast<const void*>(&gitem);
-			}
+			std::stable_sort(Objects.begin(), Objects.end());
 
-			point_t get_y() const {
-				switch (type) {
-				case TO_PLAYER: {
-					return reinterpret_cast<const Player*>(ptr)->pos.y;
-				}break;
-				case TO_SLIME: {
-					return reinterpret_cast<const Slime*>(ptr)->pos.y;
-				}break;
-				case TO_BAT: {
-					return reinterpret_cast<const Bat*>(ptr)->pos.y;
-				}break;
-				case TO_GAME_ITEM: {
-					return reinterpret_cast<const game_item*>(ptr)->pos.y;
-				}break;
-				}
-
-				ASSERT(false, "undefind object type");
+			for (auto& obj : Objects) {
+				obj.draw();
 			}
-
-			void draw() {
-				switch (type) {
-				case TO_PLAYER: {
-					reinterpret_cast<const Player*>(ptr)->draw();
-				}break;
-				case TO_SLIME: {
-					reinterpret_cast<const Slime*>(ptr)->draw();
-				}break;
-				case TO_BAT: {
-					reinterpret_cast<const Bat*>(ptr)->draw();
-				}break;
-				case TO_GAME_ITEM: {
-					reinterpret_cast<const game_item*>(ptr)->draw();
-				}break;
-				case TO_UNDEFIND: {
-					ASSERT(false, "undefind object type");
-				}break;
-				}
-			}
-
-			bool operator < (const top_sort_object& Rhs) const {
-				return get_y() > Rhs.get_y();
-			}
-		};
-
-		std::vector<top_sort_object> Objects;
-		Objects.push_back(player);
-		for (auto& slime : Slimes) {
-			Objects.push_back(slime);
-		}
-		for (auto& bat : Bats) {
-			Objects.push_back(bat);
-		}
-		for (auto& gitem : Game_items) {
-			Objects.push_back(gitem);
-		}
-
-		std::stable_sort(Objects.begin(), Objects.end());
-
-		for (auto& obj : Objects) {
-			obj.draw();
 		}
 	}
 	
@@ -244,6 +250,13 @@ void simulate_input(const Input& input, func_t&& window_mode_callback) {
 		running = false;
 	}
 
+	if (!player.is_paralyzed) {
+		player.is_eyes_closed = is_down(BUTTON_SHIFT);
+	}
+	else {
+		player.is_eyes_closed = false;
+	}
+
 	if (pressed(BUTTON_ENTER)) {
 		window_mode_callback();
 	}
@@ -255,7 +268,7 @@ void simulate_input(const Input& input, func_t&& window_mode_callback) {
 	if (pressed(BUTTON_K)) {
 		locator_vis_mode = !locator_vis_mode;
 	}
-
+	
 	if (pressed(BUTTON_F)) {
 		show_fps = !show_fps;
 	}

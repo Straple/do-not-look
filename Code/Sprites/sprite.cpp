@@ -22,6 +22,7 @@ enum sprite_t : u8 {
 	// player
 
 	SP_PLAYER,
+	SP_PLAYER_CLOSED_EYES,
 
 	// enemies
 
@@ -83,6 +84,7 @@ void read_sprites() {
 	// player
 	{
 		read(SP_PLAYER, "Player/player.png");
+		read(SP_PLAYER_CLOSED_EYES, "Player/player_closed_eyes.png");
 	}
 
 	// enemies

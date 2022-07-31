@@ -50,6 +50,11 @@ point_t get_rnd_range(point_t left, point_t right) {
 	return left + len * get_urnd();
 }
 
+s64 get_rnd_range_int(s64 left, s64 right) {
+	ASSERT(left <= right, "get_rnd_range_int: wrong border [left, right]");
+	return left + (rnd() % u64(right - left + 1));
+}
+
 template<typename T>
 T quare(const T& val) {
 	return val * val;
@@ -105,6 +110,15 @@ u64 round_two(u64 n) {
 }
 
 void fill(u32* dest, u32 val32, u32 len) {
+
+#ifdef WINX32
+
+	for (u32 i = 0; i < len; i++) {
+		dest[i] = val32;
+	}
+
+#elif defined(WINX64)
+
 	u64 val64 = (static_cast<u64>(val32) << 32) | val32;
 
 	len--;
@@ -116,4 +130,6 @@ void fill(u32* dest, u32 val32, u32 len) {
 	if (len & 1) {
 		dest[len - 1] = val32;
 	}
+
+#endif
 }

@@ -13,6 +13,7 @@ enum button_t : u8 {
 	BUTTON_MOUSE_L,
 	BUTTON_MOUSE_R,
 	BUTTON_DEL,
+	BUTTON_SHIFT,
 
 	BUTTON_A,
 	BUTTON_B,

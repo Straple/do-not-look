@@ -13,7 +13,7 @@
 
 struct Slime {
 
-	inline static const enemy_state enemy_state = enemy_state(1, 3, 30, 40, 8, 250, 0.3, 3, 2, 3);
+	inline static const enemy_state enemy_state = ::enemy_state(1, 3, 30, 40, 8, 250, 0.3, 3, 2, 3);
 
 	// pos and move
 	dot pos;
@@ -84,6 +84,8 @@ struct Slime {
 					player.update_health(-1);
 
 					add_hit_effect(player.pos + dot(-8, 16) * PLAYER_DRAW_SIZE);
+					add_sound_player_hurt();
+					add_sound_slime_balloon();
 				}
 			}
 			else {
@@ -123,13 +125,17 @@ struct Slime {
 						// и перезарядка атаки прошла и перезарядка игрока тоже
 						attack_cooldown_accum >= enemy_state.attack_cooldown && player.paralyzed_cooldown_acc >= PLAYER_STATICPOS_COOLDOWN) {
 
-						// attack animation beginner
+						// у игрока открыты глаза
+						if (!player.is_eyes_closed) {
 
-						player.is_paralyzed = is_attack = true; // игрок не может двигаться и у нас анимация атаки
+							// attack animation beginner
 
-						pos = player.pos; // прыгаем на игрока
+							player.is_paralyzed = is_attack = true; // игрок не может двигаться и у нас анимация атаки
 
-						anim = SLIME_ANIM_ATTACK;
+							pos = player.pos; // прыгаем на игрока
+
+							anim = SLIME_ANIM_ATTACK;
+						}
 					}
 				}
 				else {
@@ -200,6 +206,7 @@ struct Slime {
 
 	bool simulate_hit(const Player& player) {
 		add_hit_effect(pos + dot(-8, 8) * SLIME_DRAW_SIZE);
+		add_sound_slime_hurt();
 
 		hp -= player.damage;
 

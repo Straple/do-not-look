@@ -1,4 +1,4 @@
-#define GAME_ITEM_DRAW_SIZE 0.3
+﻿#define GAME_ITEM_DRAW_SIZE 0.3
 #define GAME_ITEM_LOCATOR_RADIUS 10
 
 struct game_item {
@@ -42,15 +42,21 @@ struct game_item {
 	}
 
 	bool simulate(point_t delta_time) {
+		// обновить левитацию
 		animation_time += delta_time;
 		if (animation_time > 1.5) {
 			animation_time = 0;
 		}
 
+		// следуем за игроком
 		if ((player.pos - pos).getLen() <= GAME_ITEM_LOCATOR_RADIUS) {
 			move_to2d(pos, player.pos, dp, (player.pos - pos) * 50, delta_time);
 
+			// игрок подобрал
 			if ((player.pos - pos).getLen() < 1) {
+
+				add_sound_player_pop_item();
+
 				if (type == IT_HEART) {
 					player.update_health(+1);
 				}
